@@ -11,10 +11,14 @@ from sklearn.manifold import TSNE; HAS_SK = True
 
 # --------------------------------------------------------------------------------------------
 # hyper Parameters
+HIDDEN_SIZE = 200
 BATCH_SIZE = 200
-IMAGE_DIMEN = 1
-LEARNING_RATE = 0.1
+LEARNING_RATE = 0.01
 EPOCH_SIZE = 50 #train the training data 50 times
+
+#initial parameter
+CLASSES_NUM = 10
+IMAGE_DIMEN = 1
 
 # --------------------------------------------------------------------------------------------
 
@@ -23,7 +27,7 @@ torch.manual_seed(1234)
 # Download data and generate train dataset and test dataset
 torchvision.datasets.MNIST(root='./mnist', train=True, download=True, transform=transforms.ToTensor())
 
-trainset = torchvision.datasets.MNIST(root='./mnist', train=True, download=True, transform=transforms.ToTensor())
+trainset = torchvision.datasets.MNIST(root='./mnist', train=True, download=True, transform=transforms.ToTensor()) #(0，1）
 
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=True)
 
@@ -32,54 +36,56 @@ testset = torchvision.datasets.MNIST(root='./mnist', train=False, download=True,
 testloader = torch.utils.data.DataLoader(testset, batch_size=BATCH_SIZE, shuffle=True)
 
 # --------------------------------------------------------------------------------------------
-#plot first number for an example
-plt.imshow(trainset.train_data[0].numpy(), cmap='gray')
-plt.title('%i' % trainset.train_labels[0])
-plt.show()
+#plot sencond number from trainset and testset
+plt.imshow(trainset.train_data[1].numpy(), cmap='gray')
+plt.title('%i' % trainset.train_labels[1])
+plt.show()  #0
+plt.imshow(testset.test_data[1].numpy(), cmap='gray')
+plt.title('%i' % testset.test_labels[1])
+plt.show()  #2
 # --------------------------------------------------------------------------------------------
 # CNN module for MINST dataset
 class CNN(nn.Module):
-    def __init__(self):
-        super(CNN, self).__init__()
-        self.layer1 = nn.Sequential(
-            nn.Conv2d(in_channels=1,  #input height  (1,28,28)
+	def __init__(self):
+		super(CNN, self).__init__()
+		self.layer1 = nn.Sequential(
+			nn.Conv2d(in_channels=1,  #input height  (1,28,28)
 					  out_channels=16, #number of filters
 					  kernel_size=5, #the wide and height of filter is 5
 					  stride=1, #filter movements
 					  padding=2  #In order to let the size(input and output) same padding=(kernal size-1)/2
 					  ), #(16,28,28)
-            nn.BatchNorm2d(16),
-            nn.ReLU(),  #Activation Function #(16,28,28)
-            nn.MaxPool2d(kernel_size=2))  # Max pooling over 2*2 windows, output shape(16,14,14)
-        self.layer2 = nn.Sequential( #input(16,14,14)
-            nn.Conv2d(16, 32, kernel_size=5, padding=2),
-            nn.BatchNorm2d(32), #(32,14,14)
-            nn.ReLU(), #(32,14,14)
-            nn.MaxPool2d(2)) #(32,7,7)
-        self.output_layer = nn.Linear(32 * 7 * 7, 10)
+			nn.BatchNorm2d(16),
+			nn.ReLU(),  #Activation Function #(16,28,28)
+			nn.MaxPool2d(kernel_size=2))  # Max pooling over 2*2 windows, output shape(16,14,14)
+		self.layer2 = nn.Sequential( #input(16,14,14)
+			nn.Conv2d(16, 32, kernel_size=5, padding=2),
+			nn.BatchNorm2d(32), #(32,14,14)
+			nn.ReLU(), #(32,14,14)
+			nn.MaxPool2d(2)) #(32,7,7)
+		self.output_layer = nn.Linear(32 * 7 * 7, 10)
 
-    def forward(self, x):
-        out = self.layer1(x)     #input image
-        out = self.layer2(out)   #(batch, 32, 7,7)
-        out = out.view(out.size(0), -1)  #flatten layer (batch, 32 * 7 * 7)
-        out = self.output_layer(out)
-        return out
+	def forward(self, x):
+		out = self.layer1(x)     #input image
+		out = self.layer2(out)   #(batch, 32, 7,7)
+		out = out.view(out.size(0), -1)  #flatten layer (batch, 32 * 7 * 7)
+		out = self.output_layer(out)
+		return out
 # --------------------------------------------------------------------------------------------
 
 # --------------------------------------------------------------------------------------------
 # Dataset Overview and visualization
-
 def imshow(img):
 	img = img / 2 + 0.5     # unnormalize
 	npimg = img.numpy()
 	plt.imshow(np.transpose(npimg, (1, 2, 0)))
 	plt.show()
 
-def overviewData(data_loader, overview):
+def overviewData(data_loader, title):
 	dataiter = iter(data_loader)
 	images, labels = dataiter.next()
 	imshow(torchvision.utils.make_grid(images))
-	print(overview, ' '.join('%5s' % str(labels[j]) for j in range(labels.size(0))))
+	print(title, ' '.join('%5s' % str(labels[j]) for j in range(labels.size(0))))
 
 def plot_with_labels(lowDWeights, labels):
 	plt.cla()
@@ -142,7 +148,7 @@ def testModel(model, dataloader, criterion, optimizer):
 		correct += (predicted == targets).sum()
 	print('Test Accuracy of the model on the 10000 test images: %d %%' % (100 * correct / total))
 
-#make visualization
+
 def visualTestModel(model, dataloader, criterion, optimizer):
 	plt.ion()
 	fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4))
@@ -150,6 +156,8 @@ def visualTestModel(model, dataloader, criterion, optimizer):
 	model.eval() #change model to 'eval' mode
 	correct = 0
 	total = 0
+	amount_dict = {}
+	correct_dict = {}
 	for images, targets in dataloader:
 		images = Variable(images)
 		outputs = model(images)
@@ -161,25 +169,36 @@ def visualTestModel(model, dataloader, criterion, optimizer):
 		steps.append(total)
 		ax1.cla()
 		for c in range(10):
+			if c not in amount_dict.keys():
+				amount_dict[c] = 0
+			if c not in correct_dict.keys():
+				correct_dict[c] = 0
+			for index in range(targets.size(0)):
+				if targets[index]==c:
+					amount_dict[c] += 1
+					if predicted[index]==c:
+						correct_dict[c] += 1
 			bp = ax1.bar(c+0.1, height=sum((predicted == c)), width=0.2, color='red')
 			bt = ax1.bar(c-0.1, height=sum((targets == c)), width=0.2, color='blue')
-			ax1.set_xticks(range(10), ['0','1','2','3','4','5','6','7','8','9'])
-			ax1.legend(handles=[bp, bt], labels=["prediction", "real number"])
-			ax2.cla()
-			ax2.plot(steps, accuracies, label="accuracy")
-			ax2.set_ylim(ymax=1)
-			ax2.set_ylabel("accuracy")
-			plt.pause(0.01)
+		ax1.set_xticks(range(10), ['0','1','2','3','4','5','6','7','8','9'])
+		ax1.legend(handles=[bp, bt], labels=["prediction", "target"])
+		ax2.cla()
+		ax2.plot(steps, accuracies, label="accuracy")
+		ax2.set_ylim(ymax=1)
+		ax2.set_ylabel("accuracy")
+		plt.pause(0.01)
 	plt.ioff()
 	plt.show()
-
-
+	for c in range(10):
+		print('Accuracy for number '+str(c)+' is '+str(correct_dict[c]/(1. * amount_dict[c])))
 
 # --------------------------------------------------------------------------------------------
 # Main function
 def main():
-	print(trainset.train_data.size())                 # (60000, 28, 28)
-	print(trainset.train_labels.size())               # (60000)
+	print('training image:'+str(trainset.train_data.size()))                 # (60000, 28, 28)
+	print('training label:'+str(trainset.train_labels.size()))               # (60000)
+	print('testing image:'+str(testset.test_data.size()))              #(10000,28,28)
+	print('testing label:'+str(testset.test_labels.size()) )           #(10000)
 	cnn = CNN()
 	print(cnn)  #net architecture
 	criterion = nn.CrossEntropyLoss()  #loss
@@ -196,4 +215,3 @@ def main():
 
 if __name__ == '__main__':
 	main()
-
