@@ -1,4 +1,4 @@
->
+>>
 # Identify Hand-Written Digits
 
 ## Introduction
@@ -51,7 +51,7 @@
  
 **2. Open the file**
 >* 1).Open the 'Pycharm CE'
-* 2).Click 'File', then click 'Open', then click 'Download'. In this path, you will find a folder names Code, in the code, you will find Code_CNN_Final_ML2.py and Code_MLP_Final_ML2.py
+>* 2).Click 'File', then click 'Open', then click 'Download'. In this path, you will find a folder names 'final-group-8', in this folder, you will find another folder which is 'Code', in the 'Code' folder, you will find 'Code_MLP_Final_ML2.py'for our MLP network and 'Code_CNN_Final_ML2.py' for our CNN network.
 
 # Goal 
 
