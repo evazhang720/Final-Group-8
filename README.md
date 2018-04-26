@@ -32,7 +32,7 @@
 * **Code_CNN_Final_ML2.py:** The Code of convolution neural network
 * **Code_MLP_Final_ML2.py:** The Code of multilayer neural perceptron
 * **Report_Final_ML2.pdf:** The report of our project 
-* **ML2 - Final Project-Slice.pptx:** The presentation of our project
+* **ML2 - Final Project-Slice.pdf:** The presentation of our project
 
 # Installation
 
