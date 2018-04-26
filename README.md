@@ -1,4 +1,4 @@
-
+>
 # Identify Hand-Written Digits
 
 ## Introduction
@@ -27,12 +27,12 @@
 
 # Project Files
 >* **README.md:** Describing the project and how to run the code 
-* **train.csv:** The training dataset that we used for this project
-* **test.csv:** The testing dataset that we used for this project
-* **Code_CNN_Final_ML2.py:** The Code of convolution neural network
-* **Code_MLP_Final_ML2.py:** The Code of multilayer neural perceptron
-* **Report_Final_ML2.pdf:** The report of our project 
-* **ML2 - Final Project-Slice.pdf:** The presentation of our project
+>* **train.csv:** The training dataset that we used for this project
+>* **test.csv:** The testing dataset that we used for this project
+>* **Code_CNN_Final_ML2.py:** The Code of convolution neural network
+>* **Code_MLP_Final_ML2.py:** The Code of multilayer neural perceptron
+>* **Report_Final_ML2.pdf:** The report of our project 
+>* **ML2 - Final Project-Slice.pdf:** The presentation of our project
 
 # Installation
 
